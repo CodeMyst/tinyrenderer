@@ -2,6 +2,7 @@
 #include "model.h"
 #include "tgaimage.h"
 #include <cmath>
+#include <cstdlib>
 #include <fstream>
 #include <type_traits>
 #include <vector>
@@ -50,7 +51,7 @@ void line(Vec2i t0, Vec2i t1, TGAImage& image, TGAColor color) {
     }
 }
 
-void bottomFlatTriangle(Vec2i t0, Vec2i t1, Vec2i t2, TGAImage& image, TGAColor color) {
+void bottom_flat_triangle(Vec2i t0, Vec2i t1, Vec2i t2, TGAImage& image, TGAColor color) {
     float invslope1 = (float)(t1.x - t0.x) / (float)(t1.y - t0.y);
     float invslope2 = (float)(t2.x - t0.x) / (float)(t2.y - t0.y);
 
@@ -65,7 +66,7 @@ void bottomFlatTriangle(Vec2i t0, Vec2i t1, Vec2i t2, TGAImage& image, TGAColor 
     }
 }
 
-void topFlatTriangle(Vec2i t0, Vec2i t1, Vec2i t2, TGAImage& image, TGAColor color) {
+void top_flat_triangle(Vec2i t0, Vec2i t1, Vec2i t2, TGAImage& image, TGAColor color) {
     float invslope1 = (float)(t2.x - t0.x) / (float)(t2.y - t0.y);
     float invslope2 = (float)(t2.x - t1.x) / (float)(t2.y - t1.y);
 
@@ -86,13 +87,13 @@ void triangle(Vec2i t0, Vec2i t1, Vec2i t2, TGAImage& image, TGAColor color) {
     if (t1.y > t2.y) std::swap(t1, t2);
 
     if (t1.y == t2.y) {
-        bottomFlatTriangle(t0, t1, t2, image, color);
+        bottom_flat_triangle(t0, t1, t2, image, color);
     } else if (t0.y == t1.y) {
-        topFlatTriangle(t0, t1, t2, image, color);
+        top_flat_triangle(t0, t1, t2, image, color);
     } else {
         Vec2i t3 = Vec2i((int)(t0.x + ((float)(t1.y - t0.y) / (float)(t2.y - t0.y)) * (t2.x - t0.x)), t1.y);
-        bottomFlatTriangle(t0, t1, t3, image, color);
-        topFlatTriangle(t1, t3, t2, image, color);
+        bottom_flat_triangle(t0, t1, t3, image, color);
+        top_flat_triangle(t1, t3, t2, image, color);
     }
 }
 
@@ -114,6 +115,32 @@ void wireframe(Model& model, int width, int height, TGAImage& image) {
     }
 }
 
+void flat_shade(Model& model, int width, int height, TGAImage& image) {
+    Vec3f light_dir(0, 0, -1);
+
+    for (int i = 0; i < model.nfaces(); i++) {
+        std::vector<int> face = model.face(i);
+
+        Vec2i screen_coords[3];
+        Vec3f world_coords[3];
+
+        for (int j = 0; j < 3; j++) {
+            Vec3f v = model.vert(face[j]);
+            screen_coords[j] = Vec2i((v.x + 1) * width / 2, (v.y + 1) * height / 2);
+            world_coords[j] = v;
+        }
+
+        Vec3f n = (world_coords[2] - world_coords[0]) ^ (world_coords[1] - world_coords[0]);
+        n.normalize();
+
+        float intensity = n * light_dir;
+
+        if (intensity > 0) {
+            triangle(screen_coords[0], screen_coords[1], screen_coords[2], image, TGAColor(intensity * 255, intensity * 255, intensity * 255, 255));
+        }
+    }
+}
+
 int main(int argc, char** argv) {
     Model model("obj/african_head.obj");
 
@@ -121,13 +148,8 @@ int main(int argc, char** argv) {
     const int height = 1000;
 
 	TGAImage image(width, height, TGAImage::RGB);
-    
-    Vec2i t0[3] = {Vec2i(10, 70),   Vec2i(50, 160),  Vec2i(70, 80)}; 
-    Vec2i t1[3] = {Vec2i(180, 50),  Vec2i(150, 1),   Vec2i(70, 180)}; 
-    Vec2i t2[3] = {Vec2i(180, 150), Vec2i(120, 160), Vec2i(130, 180)}; 
-    triangle(t0[0], t0[1], t0[2], image, red); 
-    triangle(t1[0], t1[1], t1[2], image, white); 
-    triangle(t2[0], t2[1], t2[2], image, green);
+
+    flat_shade(model, width, height, image);
 
 	image.flip_vertically(); // origin at the left bottom corner of the image
 	image.write_tga_file("output.tga");

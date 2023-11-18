@@ -2,13 +2,14 @@ TARGET_EXEC := tinyrenderer
 
 BUILD_DIR := ./bin
 SRC_DIRS := ./src
+ASSETS_DIR := ./assets
 INCLUDE_DIR := ./includes
 
 SRCS := src/main.c
 
 OBJS := $(SRCS:%=$(BUILD_DIR)/%.o)
 
-CFLAGS  := -Wall -O3
+CFLAGS  := -Wall -O3 -g
 LDFLAGS := -lraylib -framework IOKit -framework Cocoa -framework OpenGL
 
 # The final build step.

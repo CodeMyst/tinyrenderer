@@ -8,7 +8,7 @@ SRCS := src/main.c
 
 OBJS := $(SRCS:%=$(BUILD_DIR)/%.o)
 
-CFLAGS  := -Wall
+CFLAGS  := -Wall -O3
 LDFLAGS := -lraylib -framework IOKit -framework Cocoa -framework OpenGL
 
 # The final build step.

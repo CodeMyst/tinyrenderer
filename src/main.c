@@ -23,48 +23,41 @@ typedef struct Model {
     long facesLength;
 } Model;
 
+void swap(int* a, int* b) {
+    int tmp = *a;
+    *a = *b;
+    *b = tmp;
+}
+
 void drawLine(int x0, int y0, int x1, int y1, Color color) {
-    bool steep = false;
-    if (abs(x0 - x1) < abs(y0 - y1)) {
-        steep = true;
-
-        int tmp = x0;
-        x0 = y0;
-        y0 = tmp;
-
-        tmp = x1;
-        x1 = y1;
-        y1 = tmp;
-    }
-
-    if (x0 > x1) {
-        int tmp = x0;
-        x0 = x1;
-        x1 = tmp;
-
-        tmp = y0;
-        y0 = y1;
-        y1 = tmp;
-    }
-
     int dx = x1 - x0;
     int dy = y1 - y0;
-    int derror = abs(dy) * 2;
-    int error = 0;
 
-    int y = y0;
-
-    for (int x = x0; x <= x1; x++) {
-        if (steep) {
-            DrawPixel(y, x, color);
-        } else {
-            DrawPixel(x, y, color);
+    if (abs(dx) > abs(dy)) {
+        if (x0 > x1) {
+            swap(&x0, &x1);
+            swap(&y0, &y1);
         }
 
-        error += derror;
-        if (error >= dx) {
-            y += (y1 > y0 ? 1 : -1);
-            error -= dx * 2;
+        float a = dy / (float) dx;
+        float y = y0;
+
+        for (int x = x0; x <= x1; x++) {
+            DrawPixel(x, y, color);
+            y += a;
+        }
+    } else {
+        if (y0 > y1) {
+            swap(&x0, &x1);
+            swap(&y0, &y1);
+        }
+
+        float a = dx / (float) dy;
+        float x = x0;
+
+        for (int y = y0; y <= y1; y++) {
+            DrawPixel(x, y, color);
+            x += a;
         }
     }
 }
@@ -156,23 +149,52 @@ int main() {
     float yOffset = 800 / 2.0;
     float scale = 800 / 2.0;
 
+    float x0 = -50;
+    float y0 = -200;
+    float x1 = 60;
+    float y1 = 240;
+
     while (!WindowShouldClose()) {
+        // if (IsKeyDown(KEY_A)) {
+        //     xOffset -= 1;
+        // } else if (IsKeyDown(KEY_D)) {
+        //     xOffset += 1;
+        // }
+        //
+        // if (IsKeyDown(KEY_W)) {
+        //     yOffset -= 1;
+        // } else if (IsKeyDown(KEY_S)) {
+        //     yOffset += 1;
+        // }
+        //
+        // if (IsKeyDown(KEY_Q)) {
+        //     scale -= 1;
+        // } else if (IsKeyDown(KEY_E)) {
+        //     scale += 1;
+        // }
+        //
         if (IsKeyDown(KEY_A)) {
-            xOffset -= 1;
+            x0 -= 1;
         } else if (IsKeyDown(KEY_D)) {
-            xOffset += 1;
+            x0 += 1;
         }
 
         if (IsKeyDown(KEY_W)) {
-            yOffset -= 1;
+            y0 -= 1;
         } else if (IsKeyDown(KEY_S)) {
-            yOffset += 1;
+            y0 += 1;
         }
 
-        if (IsKeyDown(KEY_Q)) {
-            scale -= 1;
-        } else if (IsKeyDown(KEY_E)) {
-            scale += 1;
+        if (IsKeyDown(KEY_LEFT)) {
+            x1 -= 1;
+        } else if (IsKeyDown(KEY_RIGHT)) {
+            x1 += 1;
+        }
+
+        if (IsKeyDown(KEY_UP)) {
+            y1 -= 1;
+        } else if (IsKeyDown(KEY_DOWN)) {
+            y1 += 1;
         }
 
         BeginDrawing();
@@ -181,7 +203,9 @@ int main() {
 
         DrawFPS(10, 10);
 
-        drawModel(model, xOffset, yOffset, scale);
+        // drawModel(model, xOffset, yOffset, scale);
+
+        drawLine(x0, y0, x1, y1, (Color){255, 255, 255, 255});
 
         EndDrawing();
     }
